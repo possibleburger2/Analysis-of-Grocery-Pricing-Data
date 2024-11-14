@@ -1,0 +1,100 @@
+---
+title: "Analysis of Grocery Pricing Data"
+author: "Daniel Xu"
+date: "2024-11-14"
+format: pdf
+bibliography: references.bib
+thanks: "Code and data are available at: [https://github.com/possibleburger2/](https://github.com/possibleburger2/Analysis-of-Grocery-Pricing-Data)."
+---
+
+# Abstract
+This paper explores a dataset of products from various vendors, focusing on pricing dynamics across different brands. Key goals include identifying price patterns, examining potential correlations, and discussing statistical issues like correlation vs. causation, missing data, and bias sources.
+
+# Introduction
+The competitive landscape of product sales requires a keen understanding of price dynamics. This study examines a dataset with columns for vendor, product details, pricing, and time to analyze how these factors influence each other. The discussion includes an analysis of correlations, missing data challenges, and sources of bias. This paper uses [@rproject2023],[@here_package] , [@dplyr2023], [@ggplot2] ,[@corrplot] ,[@sql_standard] to do data analysis, and data from [@filipp2023hammer].
+
+# Data and Measurement
+The dataset includes:
+- **vendor**: Vendor name
+- **product_name**: Product name
+- **nowtime**: Timestamp of data record
+- **brand**: Product brand
+- **total_records**: Number of records for the product
+- **min_price**: Minimum price
+- **max_price**: Maximum price
+- **price_difference**: Difference between max and min price
+- **avg_price**: Average price across records
+
+Data preprocessing and summary statistics are shown below.
+
+```{r}
+#| warning: false
+#| message: false
+# Load necessary packages
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+library(here)
+
+# Load data 
+data <- read.csv(here("data/cleaned_data/final_data.csv"))
+
+# Summary statistics
+summary(data)
+```
+Results
+Price Trends by Vendor and Brand
+
+This section examines average prices by vendor and brand.
+```{r}
+#| warning: false
+#| message: false
+# Average price by brand or vendor
+ggplot(data, aes(x = brand, y = avg_price, fill = vendor)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Average Prices by Brand and Vendor",
+       x = "Brand",
+       y = "Average Price") +
+  theme_minimal()
+```
+Average Price Over Time
+
+This line plot shows average price changes over time.
+```{r}
+#| warning: false
+# Line plot of avg_price over time
+data$nowtime <- as.Date(data$nowtime)  # Convert to Date if needed
+ggplot(data, aes(x = nowtime, y = avg_price, color = vendor)) +
+  geom_line() +
+  labs(title = "Average Price Over Time",
+       x = "Time",
+       y = "Average Price") +
+  theme_minimal()
+```
+Correlation Matrix
+
+A heatmap of correlations among numerical variables.
+```{r}
+#| warning: false
+#| message: false
+# Correlation matrix for price-related variables
+price_data <- data %>% select(min_price, max_price, price_difference, avg_price)
+price_data <- price_data %>%
+  mutate(across(everything(), ~ as.numeric(as.character(.))))
+cor_matrix <- cor(price_data, use = "complete.obs")
+corrplot(cor_matrix, method = "color", title = "Correlation Matrix of Price Variables")
+```
+Discussion
+1. Correlation vs. Causation
+
+While the correlation matrix provides insights into potential relationships among price variables, we cannot infer causation. Higher correlations between min_price and avg_price may suggest pricing trends but do not indicate a causal effect.
+2. Missing Data
+
+Missing values in certain columns, such as max_price or avg_price, may skew results. Imputation techniques like mean substitution or data exclusion were considered to handle these issues.
+3. Sources of Bias
+
+Possible sources of bias include selection bias if only certain vendors are represented, temporal bias if data collection was concentrated around specific periods, and brand bias where established brands might skew average prices upwards.
+Conclusion
+
+The analysis highlights notable price patterns and correlations among vendors and brands. Handling issues such as missing data and bias is crucial to ensure valid insights. Future studies should aim to gather more comprehensive data across a wider range of vendors and time frames.
+
